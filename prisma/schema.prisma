@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+}
+
+model AdminUser {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  role         UserRole       @default(ADMIN)
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  expiresAt    DateTime
+  lastSeenAt   DateTime?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  user         AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ValuationRequest {
+  id               String      @id @default(cuid())
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  paket            String?
+  rolle            String?
+  plz              String?
+  city             String?
+  state            String?
+  objectAddress    String?
+  checkoutMode     String
+  checkoutStatus   String
+  marketValue      Float?
+  aiSummary        String?
+  valuationMethod  String?
+  reportVersion    String?
+  propertyCategory String?
+  propertySubtype  String?
+  livingArea       Float?
+  lotAreaShare     Float?
+  landValueRate    Float?
+  formData         Json
+  resultData       Json
+  brwData          Json?
+  metadata         Json?
+  pdfDocument      PdfDocument?
+
+  @@index([createdAt])
+  @@index([plz])
+}
+
+model PdfDocument {
+  id                 String           @id @default(cuid())
+  valuationRequestId String           @unique
+  createdAt          DateTime         @default(now())
+  storageType        String           @default("render-on-demand")
+  title              String?
+  checksum           String?
+  metadata           Json?
+  valuationRequest   ValuationRequest @relation(fields: [valuationRequestId], references: [id], onDelete: Cascade)
+}
+
+model ApiLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  level       String
+  scope       String
+  message     String
+  requestId   String?
+  ipAddress   String?
+  route       String?
+  statusCode  Int?
+  durationMs  Int?
+  metadata    Json?
+
+  @@index([createdAt])
+  @@index([scope])
+  @@index([level])
+}
+
+model ExternalCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
